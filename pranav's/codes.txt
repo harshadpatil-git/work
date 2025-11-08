@@ -1,0 +1,753 @@
+// Problem Statement 1: Two-Pass Assembler (Simplified Version)
+
+// This simulates symbol table and intermediate code creation.
+
+
+assember.asm file
+
+START 100
+LOOP : LOAD A
+       ADD B
+	STORE C
+	JMP LOOP 
+
+#include <iostream>
+#include <fstream>
+#include <map>
+#include <vector>
+#include <sstream>
+using namespace std;
+
+struct Symbol {
+    string name;
+    int address;
+};
+
+int main() {
+    // Input file name mentioned here
+    string filename = "assembler_input.asm";
+    ifstream file(filename);
+    if (!file) {
+        cout << "Error: Cannot open " << filename << endl;
+        return 1;
+    }
+
+    map<string, int> opcode = {
+        {"LOAD", 1}, {"STORE", 2}, {"ADD", 3}, {"SUB", 4},
+        {"MUL", 5}, {"DIV", 6}, {"READ", 7}, {"PRINT", 8}
+    };
+
+    vector<Symbol> symtab;
+    vector<string> intermediate;
+    string line;
+    int locctr = 0;
+
+    while (getline(file, line)) {
+        if (line == "END") break;
+
+        stringstream ss(line);
+        string label, opcodeStr, operand;
+        ss >> label >> opcodeStr >> operand;
+
+        if (opcode.count(label)) { // No label present
+            operand = opcodeStr;
+            opcodeStr = label;
+            label = "";
+        }
+
+        if (!label.empty())
+            symtab.push_back({label, locctr});
+
+        if (opcode.count(opcodeStr)) {
+            intermediate.push_back(to_string(locctr) + " " + opcodeStr + " " + operand);
+            locctr += 3;
+        } else if (opcodeStr == "DS")
+            locctr += stoi(operand);
+        else if (opcodeStr == "DC")
+            locctr += 1;
+    }
+
+    cout << "\n--- SYMBOL TABLE ---\n";
+    for (auto &s : symtab)
+        cout << s.name << "\t" << s.address << endl;
+
+    cout << "\n--- INTERMEDIATE CODE ---\n";
+    for (auto &i : intermediate)
+        cout << i << endl;
+
+    return 0;
+}
+
+// Run:
+
+g++ assembler.cpp -o assembler
+./assembler
+
+
+// Problem Statement 2: Two-Pass Macro Processor (Simplified)
+
+asm file  - 
+MACRO 
+INCR &ARG
+	ADD &ARG, =1
+MEND 
+
+#include <iostream>
+#include <fstream>
+#include <map>
+#include <vector>
+#include <sstream>
+using namespace std;
+
+int main() {
+    // Input file name mentioned here
+    string filename = "macro_input.asm";
+    ifstream file(filename);
+    if (!file) {
+        cout << "Error: Cannot open " << filename << endl;
+        return 1;
+    }
+
+    map<string, int> MNT;
+    vector<string> MDT;
+    string line;
+    int mdtp = 0;
+
+    while (getline(file, line)) {
+        if (line == "END") break;
+        if (line.find("MACRO") != string::npos) {
+            getline(file, line);
+            stringstream ss(line);
+            string name;
+            ss >> name;
+            MNT[name] = mdtp;
+            MDT.push_back(line);
+            mdtp++;
+            while (getline(file, line)) {
+                if (line == "MEND") break;
+                MDT.push_back(line);
+                mdtp++;
+            }
+            MDT.push_back("MEND");
+            mdtp++;
+        }
+    }
+
+    cout << "\n--- MNT ---\n";
+    for (auto &m : MNT)
+        cout << m.first << "\t" << m.second << endl;
+
+    cout << "\n--- MDT ---\n";
+    for (int i = 0; i < MDT.size(); i++)
+        cout << i << "\t" << MDT[i] << endl;
+
+    return 0;
+}
+
+
+
+// Problem Statement 3: First Come First Serve (FCFS) CPU Scheduling
+
+#include <iostream>
+using namespace std;
+
+int main() {
+    int n;
+    cout << "Enter number of processes: ";
+    cin >> n;
+
+    int pid[n], at[n], bt[n], wt[n], tat[n];
+    float avgWT = 0, avgTAT = 0;
+
+    for (int i = 0; i < n; i++) {
+        cout << "\nProcess " << i+1 << " ID: ";
+        cin >> pid[i];
+        cout << "Arrival Time: ";
+        cin >> at[i];
+        cout << "Burst Time: ";
+        cin >> bt[i];
+    }
+
+    // Sort by Arrival Time
+    for (int i = 0; i < n-1; i++) {
+        for (int j = i+1; j < n; j++) {
+            if (at[i] > at[j]) {
+                swap(at[i], at[j]);
+                swap(bt[i], bt[j]);
+                swap(pid[i], pid[j]);
+            }
+        }
+    }
+
+    int ct[n];
+    ct[0] = at[0] + bt[0];
+    for (int i = 1; i < n; i++) {
+        if (at[i] > ct[i-1])
+            ct[i] = at[i] + bt[i];
+        else
+            ct[i] = ct[i-1] + bt[i];
+    }
+
+    for (int i = 0; i < n; i++) {
+        tat[i] = ct[i] - at[i];
+        wt[i] = tat[i] - bt[i];
+        avgWT += wt[i];
+        avgTAT += tat[i];
+    }
+
+    cout << "\n\nPID\tAT\tBT\tCT\tTAT\tWT\n";
+    for (int i = 0; i < n; i++) {
+        cout << pid[i] << "\t" << at[i] << "\t" << bt[i] << "\t" 
+             << ct[i] << "\t" << tat[i] << "\t" << wt[i] << endl;
+    }
+
+    cout << "\nAverage Waiting Time: " << avgWT/n;
+    cout << "\nAverage Turnaround Time: " << avgTAT/n;
+
+    cout << "\n\nGantt Chart:\n";
+    for (int i = 0; i < n; i++)
+        cout << "| P" << pid[i] << " ";
+    cout << "|\n";
+    cout << at[0] << " ";
+    for (int i = 0; i < n; i++)
+        cout << ct[i] << " ";
+    cout << endl;
+}
+
+
+// Problem Statement 4: SJF (Preemptive)
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct Process {
+    int pid, at, bt, rt, wt, tat, ct;
+};
+
+int main() {
+    int n;
+    cout << "Enter number of processes: ";
+    cin >> n;
+    vector<Process> p(n);
+    for (int i = 0; i < n; i++) {
+        p[i].pid = i + 1;
+        cout << "Arrival Time of P" << i+1 << ": ";
+        cin >> p[i].at;
+        cout << "Burst Time of P" << i+1 << ": ";
+        cin >> p[i].bt;
+        p[i].rt = p[i].bt;
+    }
+
+    int complete = 0, time = 0, minm = 1e9;
+    int shortest = 0;
+    bool check = false;
+    float total_wt = 0, total_tat = 0;
+
+    while (complete != n) {
+        for (int j = 0; j < n; j++) {
+            if ((p[j].at <= time) && (p[j].rt < minm) && p[j].rt > 0) {
+                minm = p[j].rt;
+                shortest = j;
+                check = true;
+            }
+        }
+
+        if (!check) {
+            time++;
+            continue;
+        }
+
+        p[shortest].rt--;
+        minm = p[shortest].rt ? p[shortest].rt : 1e9;
+
+        if (p[shortest].rt == 0) {
+            complete++;
+            check = false;
+            int finish_time = time + 1;
+            p[shortest].ct = finish_time;
+            p[shortest].tat = finish_time - p[shortest].at;
+            p[shortest].wt = p[shortest].tat - p[shortest].bt;
+
+            total_tat += p[shortest].tat;
+            total_wt += p[shortest].wt;
+        }
+        time++;
+    }
+
+    cout << "\nPID\tAT\tBT\tWT\tTAT\n";
+    for (auto &x : p)
+        cout << x.pid << "\t" << x.at << "\t" << x.bt << "\t" 
+             << x.wt << "\t" << x.tat << endl;
+
+    cout << "\nAverage Waiting Time: " << total_wt / n;
+    cout << "\nAverage Turnaround Time: " << total_tat / n << endl;
+}
+
+// Problem Statement 5: Priority Scheduling (Non-Preemptive)
+
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+struct Process {
+    int pid, bt, priority, wt, tat;
+};
+
+bool compare(Process a, Process b) {
+    return a.priority > b.priority;
+}
+
+int main() {
+    int n;
+    cout << "Enter number of processes: ";
+    cin >> n;
+    Process p[n];
+
+    for (int i = 0; i < n; i++) {
+        p[i].pid = i + 1;
+        cout << "Burst Time for P" << i+1 << ": ";
+        cin >> p[i].bt;
+        cout << "Priority: ";
+        cin >> p[i].priority;
+    }
+
+    sort(p, p + n, compare);
+
+    p[0].wt = 0;
+    for (int i = 1; i < n; i++)
+        p[i].wt = p[i-1].wt + p[i-1].bt;
+
+    float avgWT = 0, avgTAT = 0;
+    for (int i = 0; i < n; i++) {
+        p[i].tat = p[i].wt + p[i].bt;
+        avgWT += p[i].wt;
+        avgTAT += p[i].tat;
+    }
+
+    cout << "\nPID\tBT\tPriority\tWT\tTAT\n";
+    for (int i = 0; i < n; i++)
+        cout << p[i].pid << "\t" << p[i].bt << "\t" 
+             << p[i].priority << "\t\t" 
+             << p[i].wt << "\t" << p[i].tat << endl;
+
+    cout << "\nAverage WT: " << avgWT/n;
+    cout << "\nAverage TAT: " << avgTAT/n << endl;
+}
+
+
+
+//Problem Statement 6: Round Robin (Preemptive)
+ 
+#include <iostream>
+#include <queue>
+using namespace std;
+
+struct Process {
+    int pid, bt, rt, wt, tat;
+};
+
+int main() {
+    int n, tq;
+    cout << "Enter number of processes: ";
+    cin >> n;
+    cout << "Enter time quantum: ";
+    cin >> tq;
+
+    Process p[n];
+    for (int i = 0; i < n; i++) {
+        p[i].pid = i + 1;
+        cout << "Burst time of P" << i+1 << ": ";
+        cin >> p[i].bt;
+        p[i].rt = p[i].bt;
+    }
+
+    queue<int> q;
+    for (int i = 0; i < n; i++) q.push(i);
+
+    int time = 0;
+    while (!q.empty()) {
+        int i = q.front();
+        q.pop();
+
+        if (p[i].rt > tq) {
+            time += tq;
+            p[i].rt -= tq;
+            q.push(i);
+        } else {
+            time += p[i].rt;
+            p[i].tat = time;
+            p[i].wt = p[i].tat - p[i].bt;
+            p[i].rt = 0;
+        }
+    }
+
+    float avgWT = 0, avgTAT = 0;
+    cout << "\nPID\tBT\tWT\tTAT\n";
+    for (int i = 0; i < n; i++) {
+        avgWT += p[i].wt;
+        avgTAT += p[i].tat;
+        cout << p[i].pid << "\t" << p[i].bt << "\t" 
+             << p[i].wt << "\t" << p[i].tat << endl;
+    }
+
+    cout << "\nAverage WT: " << avgWT/n;
+    cout << "\nAverage TAT: " << avgTAT/n << endl;
+}
+
+
+//Problem Statement 7: Memory Allocation – First Fit
+ 
+#include <iostream>
+using namespace std;
+
+int main() {
+    int b, p;
+    cout << "Enter number of blocks: ";
+    cin >> b;
+    cout << "Enter number of processes: ";
+    cin >> p;
+
+    int block[b], process[p], allocation[p];
+    cout << "Enter block sizes:\n";
+    for (int i = 0; i < b; i++) cin >> block[i];
+    cout << "Enter process sizes:\n";
+    for (int i = 0; i < p; i++) cin >> process[i];
+
+    for (int i = 0; i < p; i++) allocation[i] = -1;
+
+    for (int i = 0; i < p; i++) {
+        for (int j = 0; j < b; j++) {
+            if (block[j] >= process[i]) {
+                allocation[i] = j;
+                block[j] -= process[i];
+                break;
+            }
+        }
+    }
+
+    cout << "\nProcess\tSize\tBlock\n";
+    for (int i = 0; i < p; i++) {
+        cout << i+1 << "\t" << process[i] << "\t";
+        if (allocation[i] != -1)
+            cout << allocation[i]+1 << endl;
+        else
+            cout << "Not Allocated\n";
+    }
+}
+
+//Problem Statement 8: Best Fit
+
+#include <iostream>
+using namespace std;
+
+int main() {
+    int b, p;
+    cout << "Enter number of blocks: ";
+    cin >> b;
+    cout << "Enter number of processes: ";
+    cin >> p;
+
+    int block[b], process[p], allocation[p];
+    cout << "Enter block sizes:\n";
+    for (int i = 0; i < b; i++) cin >> block[i];
+    cout << "Enter process sizes:\n";
+    for (int i = 0; i < p; i++) cin >> process[i];
+
+    for (int i = 0; i < p; i++) allocation[i] = -1;
+
+    for (int i = 0; i < p; i++) {
+        int bestIdx = -1;
+        for (int j = 0; j < b; j++) {
+            if (block[j] >= process[i]) {
+                if (bestIdx == -1 || block[j] < block[bestIdx])
+                    bestIdx = j;
+            }
+        }
+        if (bestIdx != -1) {
+            allocation[i] = bestIdx;
+            block[bestIdx] -= process[i];
+        }
+    }
+
+    cout << "\nProcess\tSize\tBlock\n";
+    for (int i = 0; i < p; i++) {
+        cout << i+1 << "\t" << process[i] << "\t";
+        if (allocation[i] != -1)
+            cout << allocation[i]+1 << endl;
+        else
+            cout << "Not Allocated\n";
+    }
+}
+
+// Problem Statement 9: Next Fit
+
+#include <iostream>
+using namespace std;
+
+int main() {
+    int b, p, last = 0;
+    cout << "Enter number of blocks: ";
+    cin >> b;
+    cout << "Enter number of processes: ";
+    cin >> p;
+
+    int block[b], process[p], allocation[p];
+    cout << "Enter block sizes:\n";
+    for (int i = 0; i < b; i++) cin >> block[i];
+    cout << "Enter process sizes:\n";
+    for (int i = 0; i < p; i++) cin >> process[i];
+
+    for (int i = 0; i < p; i++) allocation[i] = -1;
+
+    for (int i = 0; i < p; i++) {
+        int j = last;
+        do {
+            if (block[j] >= process[i]) {
+                allocation[i] = j;
+                block[j] -= process[i];
+                last = j;
+                break;
+            }
+            j = (j + 1) % b;
+        } while (j != last);
+    }
+
+    cout << "\nProcess\tSize\tBlock\n";
+    for (int i = 0; i < p; i++) {
+        cout << i+1 << "\t" << process[i] << "\t";
+        if (allocation[i] != -1)
+            cout << allocation[i]+1 << endl;
+        else
+            cout << "Not Allocated\n";
+    }
+}
+
+// Problem Statement 9: Next Fit
+
+#include <iostream>
+using namespace std;
+
+int main() {
+    int b, p, last = 0;
+    cout << "Enter number of blocks: ";
+    cin >> b;
+    cout << "Enter number of processes: ";
+    cin >> p;
+
+    int block[b], process[p], allocation[p];
+    cout << "Enter block sizes:\n";
+    for (int i = 0; i < b; i++) cin >> block[i];
+    cout << "Enter process sizes:\n";
+    for (int i = 0; i < p; i++) cin >> process[i];
+
+    for (int i = 0; i < p; i++) allocation[i] = -1;
+
+    for (int i = 0; i < p; i++) {
+        int j = last;
+        do {
+            if (block[j] >= process[i]) {
+                allocation[i] = j;
+                block[j] -= process[i];
+                last = j;
+                break;
+            }
+            j = (j + 1) % b;
+        } while (j != last);
+    }
+
+    cout << "\nProcess\tSize\tBlock\n";
+    for (int i = 0; i < p; i++) {
+        cout << i+1 << "\t" << process[i] << "\t";
+        if (allocation[i] != -1)
+            cout << allocation[i]+1 << endl;
+        else
+            cout << "Not Allocated\n";
+    }
+}
+
+
+// Problem Statement 10: Worst Fit
+
+#include <iostream>
+using namespace std;
+
+int main() {
+    int b, p;
+    cout << "Enter number of blocks: ";
+    cin >> b;
+    cout << "Enter number of processes: ";
+    cin >> p;
+
+    int block[b], process[p], allocation[p];
+    cout << "Enter block sizes:\n";
+    for (int i = 0; i < b; i++) cin >> block[i];
+    cout << "Enter process sizes:\n";
+    for (int i = 0; i < p; i++) cin >> process[i];
+
+    for (int i = 0; i < p; i++) allocation[i] = -1;
+
+    for (int i = 0; i < p; i++) {
+        int worstIdx = -1;
+        for (int j = 0; j < b; j++) {
+            if (block[j] >= process[i]) {
+                if (worstIdx == -1 || block[j] > block[worstIdx])
+                    worstIdx = j;
+            }
+        }
+        if (worstIdx != -1) {
+            allocation[i] = worstIdx;
+            block[worstIdx] -= process[i];
+        }
+    }
+
+    cout << "\nProcess\tSize\tBlock\n";
+    for (int i = 0; i < p; i++) {
+        cout << i+1 << "\t" << process[i] << "\t";
+        if (allocation[i] != -1)
+            cout << allocation[i]+1 << endl;
+        else
+            cout << "Not Allocated\n";
+    }
+}
+
+
+//Problem Statement 11: FIFO Page Replacement
+
+#include <iostream>
+#include <vector>
+#include <queue>
+using namespace std;
+
+int main() {
+    int n, f;
+    cout << "Enter number of pages: ";
+    cin >> n;
+    cout << "Enter number of frames: ";
+    cin >> f;
+
+    vector<int> pages(n);
+    cout << "Enter page reference string: ";
+    for (int i = 0; i < n; i++) cin >> pages[i];
+
+    vector<int> frame;
+    queue<int> q;
+    int faults = 0;
+
+    for (int i = 0; i < n; i++) {
+        bool hit = false;
+        for (int j : frame)
+            if (j == pages[i]) hit = true;
+
+        if (!hit) {
+            faults++;
+            if (frame.size() < f) {
+                frame.push_back(pages[i]);
+                q.push(pages[i]);
+            } else {
+                int victim = q.front(); q.pop();
+                for (int k = 0; k < f; k++)
+                    if (frame[k] == victim) frame[k] = pages[i];
+                q.push(pages[i]);
+            }
+        }
+
+        cout << "\nFrames: ";
+        for (int k : frame) cout << k << " ";
+    }
+
+    cout << "\nTotal Page Faults: " << faults << endl;
+}
+
+
+//Problem Statement 12: LRU Page Replacement
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int n, f;
+    cout << "Enter number of pages: ";
+    cin >> n;
+    cout << "Enter number of frames: ";
+    cin >> f;
+
+    vector<int> pages(n), frame;
+    cout << "Enter page reference string: ";
+    for (int i = 0; i < n; i++) cin >> pages[i];
+
+    int faults = 0;
+    for (int i = 0; i < n; i++) {
+        auto it = find(frame.begin(), frame.end(), pages[i]);
+        if (it == frame.end()) {
+            faults++;
+            if (frame.size() < f)
+                frame.push_back(pages[i]);
+            else
+                frame.erase(frame.begin()), frame.push_back(pages[i]);
+        } else {
+            frame.erase(it);
+            frame.push_back(pages[i]);
+        }
+
+        cout << "\nFrames: ";
+        for (int k : frame) cout << k << " ";
+    }
+
+    cout << "\nTotal Page Faults: " << faults << endl;
+}
+
+// Problem Statement 13: Optimal Page Replacement
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int predict(vector<int> &pages, vector<int> &frame, int n, int index) {
+    int res = -1, farthest = index;
+    for (int i = 0; i < frame.size(); i++) {
+        int j;
+        for (j = index; j < n; j++)
+            if (frame[i] == pages[j]) break;
+        if (j == n) return i;
+        if (j > farthest) {
+            farthest = j;
+            res = i;
+        }
+    }
+    return (res == -1) ? 0 : res;
+}
+
+int main() {
+    int n, f;
+    cout << "Enter number of pages: ";
+    cin >> n;
+    cout << "Enter number of frames: ";
+    cin >> f;
+
+    vector<int> pages(n), frame;
+    cout << "Enter page reference string: ";
+    for (int i = 0; i < n; i++) cin >> pages[i];
+
+    int faults = 0;
+    for (int i = 0; i < n; i++) {
+        if (find(frame.begin(), frame.end(), pages[i]) != frame.end())
+            continue;
+        faults++;
+        if (frame.size() < f)
+            frame.push_back(pages[i]);
+        else {
+            int j = predict(pages, frame, n, i + 1);
+            frame[j] = pages[i];
+        }
+
+        cout << "\nFrames: ";
+        for (int k : frame) cout << k << " ";
+    }
+
+    cout << "\nTotal Page Faults: " << faults << endl;
+}
