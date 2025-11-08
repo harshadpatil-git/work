@@ -1,0 +1,68 @@
+save this file with following file name expr.l
+%{
+#include "y.tab.h"
+%}
+
+DIGIT   [0-9]+
+
+%%
+{DIGIT}     { yylval = atoi(yytext); return NUMBER; }
+[+\-*/()]   { return yytext[0]; }
+[ \t\n]     { /* ignore whitespace */ }
+.           { return yytext[0]; }
+%%
+
+int yywrap() { return 1; }
+
+
+save this file with following file name expr.y
+
+
+
+%{
+#include <stdio.h>
+#include <stdlib.h>
+
+int yylex();
+void yyerror(const char *s);
+%}
+
+%token NUMBER
+
+%left '+' '-'
+%left '*' '/'
+
+%%
+/* Grammar rules for expression parsing and evaluation */
+E : E '+' E    { $$ = $1 + $3; }
+  | E '-' E    { $$ = $1 - $3; }
+  | E '*' E    { $$ = $1 * $3; }
+  | E '/' E    {
+                    if ($3 == 0)
+                        yyerror("Division by zero");
+                    else
+                        $$ = $1 / $3;
+                }
+  | '(' E ')'  { $$ = $2; }
+  | NUMBER     { $$ = $1; }
+  ;
+%%
+
+int main() {
+    printf("Enter an expression: ");
+    if (yyparse() == 0)
+        printf("Expression is valid.\n");
+    return 0;
+}
+
+void yyerror(const char *s) {
+    printf("Invalid expression: %s\n", s);
+}
+
+
+
+use following command to run the program 
+yacc -d expr.y
+lex expr.l
+gcc y.tab.c lex.yy.c -o expr_calc
+./expr_calc
