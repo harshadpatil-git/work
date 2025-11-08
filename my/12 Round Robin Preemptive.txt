@@ -1,0 +1,77 @@
+# Round Robin CPU Scheduling (Preemptive)
+
+process = ['P1', 'P2', 'P3', 'P4']
+arrival = [0, 1, 4, 3]
+burst = [6, 4, 8, 3]
+time_quantum = 2
+
+n = len(process)
+remaining = burst[:]       # remaining burst times
+waiting = [0] * n
+turnaround = [0] * n
+completion = [0] * n
+
+time = 0
+queue = []
+visited = [False] * n
+completed = 0
+
+# sort by arrival just to ensure correct order
+process_data = sorted(zip(process, arrival, burst), key=lambda x: x[1])
+process, arrival, burst = zip(*process_data)
+remaining = list(burst)
+
+while completed < n:
+    # Add newly arrived processes to the queue
+    for i in range(n):
+        if arrival[i] <= time and not visited[i] and remaining[i] > 0:
+            queue.append(i)
+            visited[i] = True
+
+    if not queue:
+        time += 1
+        continue
+
+    idx = queue.pop(0)
+
+    # Execute for time quantum or remaining time
+    if remaining[idx] > time_quantum:
+        time += time_quantum
+        remaining[idx] -= time_quantum
+    else:
+        time += remaining[idx]
+        remaining[idx] = 0
+        completion[idx] = time
+        turnaround[idx] = completion[idx] - arrival[idx]
+        waiting[idx] = turnaround[idx] - burst[idx]
+        completed += 1
+
+    # Add newly arrived processes during execution
+    for i in range(n):
+        if arrival[i] <= time and not visited[i] and remaining[i] > 0:
+            queue.append(i)
+            visited[i] = True
+
+    # If current process still has time left, re-add it to the queue
+    if remaining[idx] > 0:
+        queue.append(idx)
+
+# Display Results
+print("Process\tAT\tBT\tCT\tTAT\tWT")
+for i in range(n):
+    print(f"{process[i]}\t{arrival[i]}\t{burst[i]}\t{completion[i]}\t{turnaround[i]}\t{waiting[i]}")
+
+print("\nAverage Waiting Time =", round(sum(waiting)/n, 2))
+print("Average Turnaround Time =", round(sum(turnaround)/n, 2))
+
+---------------------------------------------------------------------------------------------------------------------
+OUTPUT
+---------------------------------------------------------------------------------------------------------------------
+Process	AT	BT	CT	TAT	WT
+P1	0	6	19	19	13
+P2	1	4	11	10	6
+P3	4	8	25	21	13
+P4	3	3	9	6	3
+
+Average Waiting Time = 8.75
+Average Turnaround Time = 14.0

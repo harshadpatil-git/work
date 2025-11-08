@@ -1,0 +1,58 @@
+import threading
+import time
+from threading import Semaphore
+
+buffer = []
+buffer_size = 3
+
+mutex = Semaphore(1)
+empty = Semaphore(buffer_size)
+full = Semaphore(0)
+
+def producer():
+    for i in range(5):
+        item = f'Item-{i+1}'
+        empty.acquire()
+        mutex.acquire()
+        buffer.append(item)
+        print(f"Producer produced {item} → Buffer: {buffer}")
+        mutex.release()
+        full.release()
+        time.sleep(1)
+
+def consumer():
+    for i in range(5):
+        full.acquire()
+        mutex.acquire()
+        item = buffer.pop(0)
+        print(f"Consumer consumed {item} → Buffer: {buffer}")
+        mutex.release()
+        empty.release()
+        time.sleep(2)
+
+t1 = threading.Thread(target=producer)
+t2 = threading.Thread(target=consumer)
+
+t1.start()
+t2.start()
+
+t1.join()
+t2.join()
+
+print("\nAll items produced and consumed successfully!")
+
+----------------------------------------------------------------------------------------------------------
+OUTPUT
+----------------------------------------------------------------------------------------------------------
+Producer produced Item-1 → Buffer: ['Item-1']
+Consumer consumed Item-1 → Buffer: []
+Producer produced Item-2 → Buffer: ['Item-2']
+Consumer consumed Item-2 → Buffer: []
+Producer produced Item-3 → Buffer: ['Item-3']
+Producer produced Item-4 → Buffer: ['Item-3', 'Item-4']
+Consumer consumed Item-3 → Buffer: ['Item-4']
+Producer produced Item-5 → Buffer: ['Item-4', 'Item-5']
+Consumer consumed Item-4 → Buffer: ['Item-5']
+Consumer consumed Item-5 → Buffer: []
+
+All items produced and consumed successfully!

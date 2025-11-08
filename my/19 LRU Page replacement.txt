@@ -1,0 +1,52 @@
+# LRU Page Replacement Algorithm
+
+pages = [2, 3, 2, 1, 5, 2, 4, 5, 3, 2, 5, 2]
+frame_size = 3
+frames = []
+page_faults = 0
+
+print("Page\tFrames\t\tPage Fault")
+
+for i in range(len(pages)):
+    page = pages[i]
+    if page not in frames:
+        if len(frames) < frame_size:
+            frames.append(page)
+        else:
+            # Find the least recently used page
+            lru_index = -1
+            oldest_use = float('inf')
+            for f in frames:
+                if f in pages[:i]:
+                    last_used = len(pages[:i]) - 1 - pages[:i][::-1].index(f)
+                else:
+                    last_used = -1
+                if last_used < oldest_use:
+                    oldest_use = last_used
+                    lru_index = frames.index(f)
+            frames[lru_index] = page
+        page_faults += 1
+        print(f"{page}\t{frames}\tYes")
+    else:
+        print(f"{page}\t{frames}\tNo")
+
+print("\nTotal Page Faults:", page_faults)
+
+--------------------------------------------------------------------------------------------------------------------------
+OUTPUT
+--------------------------------------------------------------------------------------------------------------------------
+Page	Frames		Page Fault
+2		[2]			Yes
+3		[2, 3]		Yes
+2		[2, 3]		No
+1		[2, 3, 1]		Yes
+5		[2, 5, 1]		Yes
+2		[2, 5, 1]		No
+4		[2, 5, 4]		Yes
+5		[2, 5, 4]		No
+3		[3, 5, 4]		Yes
+2		[3, 5, 2]		Yes
+5		[3, 5, 2]		No
+2		[3, 5, 2]		No
+
+Total Page Faults: 7

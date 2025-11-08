@@ -1,0 +1,39 @@
+# Worst Fit Memory Allocation
+
+# Memory partitions (in KB)
+partitions = [100, 500, 200, 300, 600]
+# Process sizes (in KB)
+processes = [212, 417, 112, 426]
+
+n = len(processes)
+m = len(partitions)
+
+allocation = [-1] * n  # To store partition index for each process
+
+# Worst Fit logic
+for i in range(n):
+    worst_idx = -1
+    for j in range(m):
+        if partitions[j] >= processes[i]:
+            if worst_idx == -1 or partitions[j] > partitions[worst_idx]:
+                worst_idx = j
+    if worst_idx != -1:
+        allocation[i] = worst_idx
+        partitions[worst_idx] -= processes[i]
+
+# Display Results
+print("Process No.\tProcess Size\tPartition No.")
+for i in range(n):
+    if allocation[i] != -1:
+        print(f"P{i+1}\t\t{processes[i]}K\t\t{allocation[i]+1}")
+    else:
+        print(f"P{i+1}\t\t{processes[i]}K\t\tNot Allocated")
+
+------------------------------------------------------------------------------------------------------------
+OUTPUT
+------------------------------------------------------------------------------------------------------------
+Process No.	Process Size	Partition No.
+P1			212K		5
+P2			417K		2
+P3			112K		5
+P4			426K		Not Allocated

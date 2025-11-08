@@ -1,0 +1,19 @@
+///////// Lex code
+
+Step 1: if not installed run this command - 
+sudo apt update
+sudo apt install flex
+
+Step 2: Create your Lex file
+Example: nano token.l
+
+Step 3: Compile the Lex file
+lex token.l
+
+This generates a lex.yy.c file.
+
+Step 4: Compile the C file
+gcc lex.yy.c -o token -ll
+
+Step 5: Run it
+./token

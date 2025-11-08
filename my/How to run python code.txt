@@ -1,0 +1,25 @@
+3️⃣ How to Run a Python Program (.py)
+🔹 Step 1: Check Python version
+python3 --version
+
+If not installed:
+sudo apt install python3
+
+🔹 Step 2: Create your file
+nano program.py
+
+Example:
+
+print("Hello, Ubuntu!")
+a = int(input("Enter a number: "))
+print("Square:", a*a)
+
+🔹 Step 3: Run it
+python3 program.py
+
+
+✅ Output:
+
+Hello, Ubuntu!
+Enter a number: 5
+Square: 25

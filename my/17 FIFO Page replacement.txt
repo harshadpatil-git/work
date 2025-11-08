@@ -1,0 +1,43 @@
+# FIFO Page Replacement Algorithm
+
+pages = [2, 3, 2, 1, 5, 2, 4, 5, 3, 2, 5, 2]
+n = len(pages)
+frames = []
+frame_size = 3
+
+page_faults = 0
+
+print("Page\tFrames\t\tPage Fault")
+
+for page in pages:
+    if page not in frames:
+        if len(frames) < frame_size:
+            frames.append(page)
+        else:
+            frames.pop(0)   # remove oldest (FIFO)
+            frames.append(page)
+        page_faults += 1
+        print(f"{page}\t{frames}\tYes")
+    else:
+        print(f"{page}\t{frames}\tNo")
+
+print("\nTotal Page Faults:", page_faults)
+
+--------------------------------------------------------------------------------------------------------------------
+OUTPUT
+--------------------------------------------------------------------------------------------------------------------
+Page	Frames		Page Fault
+2		[2]			Yes
+3		[2, 3]		Yes
+2		[2, 3]		No
+1		[2, 3, 1]		Yes
+5		[3, 1, 5]		Yes
+2		[1, 5, 2]		Yes
+4		[5, 2, 4]		Yes
+5		[5, 2, 4]		No
+3		[2, 4, 3]		Yes
+2		[2, 4, 3]		No
+5		[4, 3, 5]		Yes
+2		[3, 5, 2]		Yes
+
+Total Page Faults: 9

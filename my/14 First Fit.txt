@@ -1,0 +1,37 @@
+# First Fit Memory Allocation
+
+# Memory partitions (in KB)
+partitions = [100, 500, 200, 300, 600]
+# Process sizes (in KB)
+processes = [212, 417, 112, 426]
+
+n = len(processes)
+m = len(partitions)
+
+allocation = [-1] * n  # To store which partition each process gets
+
+# First Fit logic
+for i in range(n):
+    for j in range(m):
+        if partitions[j] >= processes[i]:  # If partition can hold process
+            allocation[i] = j              # Assign this partition
+            partitions[j] -= processes[i]  # Reduce available memory
+            break                          # Move to next process once allocated
+
+# Display Results
+print("Process No.\tProcess Size\tPartition No.")
+for i in range(n):
+    if allocation[i] != -1:
+        print(f"P{i+1}\t\t{processes[i]}K\t\t{allocation[i]+1}")
+    else:
+        print(f"P{i+1}\t\t{processes[i]}K\t\tNot Allocated")
+
+---------------------------------------------------------------------------------------------------------
+OUTPUT
+---------------------------------------------------------------------------------------------------------
+
+Process No.	Process Size	Partition No.
+P1			212K		2
+P2			417K		5
+P3			112K		2
+P4			426K		Not Allocated

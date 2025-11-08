@@ -1,0 +1,116 @@
+#include <iostream>
+#include <map>
+#include <vector>
+#include <string>
+#include <sstream>
+using namespace std;
+
+// Helper to trim parentheses and extract content
+string extract(const string &s) {
+    if (s.size() > 2 && s.front() == '(' && s.back() == ')')
+        return s.substr(1, s.size() - 2);
+    return s;
+}
+
+// Convert intermediate code to machine code
+int main() {
+    // Symbol Table
+    map<int, int> symtab = {
+        {1, 214},  // X
+        {2, 202},  // L1
+        {3, 207},  // NEXT
+        {4, 202}   // BACK
+    };
+
+    // Literal Table
+    map<int, int> littab = {
+        {1, 205},
+        {2, 206},
+        {3, 210},
+        {4, 211},
+        {5, 215}
+    };
+
+    // Intermediate Code (simplified for simulation)
+    vector<string> IC = {
+        "(AD,01) (C,200)",
+        "(IS,04) 1 (L,1)",
+        "(IS,05) 1 (S,1)",
+        "(IS,04) 2 (L,2)",
+        "(AD,03) (S,2)+3",
+        "(AD,05)",
+        "(L,1)",
+        "(L,2)",
+        "(IS,01) 1 (L,3)",
+        "(IS,02) 2 (L,4)",
+        "(IS,07) 1 (S,4)",
+        "(AD,05)",
+        "(L,3)",
+        "(L,4)",
+        "(AD,04) (S,2)",
+        "(IS,03) 3 (L,5)",
+        "(IS,00)",
+        "(DL,02) (C,1)",
+        "(AD,02)"
+    };
+
+    cout << "Machine Code Output:\n";
+    cout << "--------------------------------------\n";
+    for (string line : IC) {
+        stringstream ss(line);
+        string part1, part2, part3;
+        ss >> part1 >> part2 >> part3;
+
+        // Extract type and code (like AD, IS, DL)
+        string type = extract(part1).substr(0, 2);
+        string code = extract(part1).substr(3, 2);
+
+        if (type == "AD") continue; // no machine code
+
+        if (type == "DL") {
+            // Example: (DL,02) (C,1) => Allocate memory with constant
+            string value = extract(part2).substr(2);
+            cout << "00 00 " << value << endl;
+            continue;
+        }
+
+        if (type == "IS") {
+            string opcode = code;
+            string reg = (part2.size() > 0 && part2[0] != '(') ? part2 : "0";
+            string address = "000";
+
+            // Handle (L,x) or (S,x)
+            if (part3.size() > 0) {
+                string arg = extract(part3);
+                if (arg[0] == 'L')
+                    address = to_string(littab[arg[2] - '0']);
+                else if (arg[0] == 'S')
+                    address = to_string(symtab[arg[2] - '0']);
+            }
+
+            cout << opcode << " " << reg << " " << address << endl;
+        }
+    }
+
+    cout << "--------------------------------------\n";
+    return 0;
+}
+
+----------------------------------------------------------------------------------------------------------
+OUTPUT
+----------------------------------------------------------------------------------------------------------
+Machine Code Output:
+--------------------------------------
+04 1 205
+05 1 214
+04 2 206
+01 1 210
+02 2 211
+07 1 202
+03 3 215
+00 0 000
+00 00 1
+--------------------------------------
+
+
+=== Code Execution Successful ===

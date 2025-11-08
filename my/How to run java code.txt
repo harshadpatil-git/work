@@ -1,0 +1,29 @@
+🧩 4️⃣ How to Run a Java Program (.java)
+🔹 Step 1: Install Java
+sudo apt install openjdk-17-jdk
+
+🔹 Step 2: Check version
+java -version
+javac -version
+
+🔹 Step 3: Create Java file
+nano Hello.java
+
+Example:
+public class Hello {
+    public static void main(String[] args) {
+        System.out.println("Hello Java on Ubuntu!");
+    }
+}
+
+🔹 Step 4: Compile
+javac Hello.java
+
+This creates a Hello.class file.
+
+🔹 Step 5: Run
+java Hello
+
+✅ Output:
+
+Hello Java on Ubuntu!

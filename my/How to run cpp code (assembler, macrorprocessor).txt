@@ -1,0 +1,41 @@
+Excellent question 👍 — running your C++ macroprocessor program on Ubuntu is very simple.
+Here’s a clear step-by-step guide to compile and execute it using the terminal.
+
+🧩 Step 1: Open Terminal
+
+Press Ctrl + Alt + T to open a new terminal window.
+
+🧩 Step 2: Create the C++ File
+
+Type this command to create a new file:
+
+nano macro_pass2.cpp
+
+
+Then paste your C++ code (the one I gave above) into the file.
+After pasting:
+
+Press Ctrl + O → press Enter to save
+
+Press Ctrl + X to exit Nano
+
+🧩 Step 3: Compile the Program
+
+Use the g++ compiler (comes pre-installed on Ubuntu).
+Run:
+
+g++ macro_pass2.cpp -o macro_pass2
+
+
+✅ If no errors appear, it means the compilation was successful.
+A new executable file named macro_pass2 is created.
+
+If g++ isn’t installed, you can install it by running:
+
+sudo apt install g++
+
+🧩 Step 4: Run the Program
+
+Now run your executable:
+
+./macro_pass2

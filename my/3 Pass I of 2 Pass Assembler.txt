@@ -1,0 +1,185 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <sstream>
+#include <iomanip>
+using namespace std;
+
+struct Symbol { string name; int address; };
+struct Literal { string value; int address; };
+
+int main() {
+    // ---------- INPUT PROGRAM ----------
+    vector<string> program = {
+        "START 200",
+        "MOVER AREG, ='5'",
+        "MOVEM AREG, X",
+        "L1 MOVER BREG, ='2'",
+        "ORIGIN L1+3",
+        "LTORG",
+        "NEXT ADD AREG, ='1'",
+        "SUB BREG, ='2'",
+        "BC LT, BACK",
+        "LTORG",
+        "BACK EQU L1",
+        "ORIGIN NEXT+5",
+        "MULT CREG, ='4'",
+        "STOP",
+        "X DS 1",
+        "END"
+    };
+
+    // ---------- TABLES ----------
+    vector<Symbol> SYMTAB;
+    vector<Literal> LITTAB;
+    vector<int> POOLTAB;
+    vector<string> IC;
+
+    int LC = 0; // location counter
+    POOLTAB.push_back(0); // first literal pool
+
+    cout << "\n=== PASS I - SIMPLE VERSION ===\n";
+
+    for (string line : program) {
+        string label = "", opcode = "", op1 = "", op2 = "";
+        stringstream ss(line);
+        ss >> label;
+
+        // check if first word is opcode or label
+        if (label == "START" || label == "MOVER" || label == "MOVEM" ||
+            label == "ADD" || label == "SUB" || label == "MULT" || label == "BC" ||
+            label == "STOP" || label == "ORIGIN" || label == "LTORG" ||
+            label == "EQU" || label == "DS" || label == "END") {
+            opcode = label;
+            label = "";
+        } else {
+            ss >> opcode;
+        }
+        ss >> op1 >> op2;
+
+        // ---------- OPCODE HANDLING ----------
+        if (opcode == "START") {
+            LC = stoi(op1);
+            IC.push_back("(AD,01)\t(C," + op1 + ")");
+        }
+        else if (opcode == "MOVER" || opcode == "MOVEM" || opcode == "ADD" ||
+                 opcode == "SUB" || opcode == "MULT" || opcode == "BC") {
+            LC++;
+            if (op2.find("='") != string::npos) {
+                LITTAB.push_back({op2, -1});
+                IC.push_back("(IS," + opcode + ")\t(L," + to_string(LITTAB.size()) + ")");
+            } else {
+                SYMTAB.push_back({op2, -1});
+                IC.push_back("(IS," + opcode + ")\t(S," + op2 + ")");
+            }
+            if (!label.empty())
+                SYMTAB.push_back({label, LC});
+        }
+        else if (opcode == "ORIGIN") {
+            IC.push_back("(AD,03)\t(" + op1 + ")");
+        }
+        else if (opcode == "LTORG" || opcode == "END") {
+            for (int i = POOLTAB.back(); i < LITTAB.size(); i++) {
+                LITTAB[i].address = LC++;
+                IC.push_back("(DL,02)\t(C," + LITTAB[i].value + ")");
+            }
+            POOLTAB.push_back(LITTAB.size());
+            if (opcode == "END")
+                IC.push_back("(AD,02)");
+        }
+        else if (opcode == "EQU") {
+            SYMTAB.push_back({label, -1});
+            IC.push_back("(AD,04)\t(" + op1 + ")");
+        }
+        else if (opcode == "DS") {
+            SYMTAB.push_back({label, LC});
+            IC.push_back("(DL,01)\t(C," + op1 + ")");
+            LC += stoi(op1);
+        }
+        else if (opcode == "STOP") {
+            LC++;
+            IC.push_back("(IS,00)");
+        }
+    }
+
+    // ---------- OUTPUT TABLES ----------
+    cout << "\nSYMBOL TABLE:\n";
+    cout << left << setw(10) << "Symbol" << "Address\n";
+    cout << "------------------\n";
+    for (auto &s : SYMTAB)
+        cout << left << setw(10) << s.name << s.address << endl;
+
+    cout << "\nLITERAL TABLE:\n";
+    cout << left << setw(10) << "Literal" << "Address\n";
+    cout << "------------------\n";
+    for (auto &l : LITTAB)
+        cout << left << setw(10) << l.value << l.address << endl;
+
+    cout << "\nPOOL TABLE:\n";
+    for (int i = 0; i < POOLTAB.size(); i++)
+        cout << "#" << i + 1 << " -> " << POOLTAB[i] << endl;
+
+    cout << "\nINTERMEDIATE CODE:\n";
+    for (auto &i : IC)
+        cout << i << endl;
+
+    cout << "\n=== PASS I Completed Successfully ===\n";
+    return 0;
+}
+
+--------------------------------------------------------------------------------------------------------------
+OUTPUT
+--------------------------------------------------------------------------------------------------------------
+
+=== PASS I - SIMPLE VERSION ===
+
+SYMBOL TABLE:
+Symbol    Address
+------------------
+X         -1
+L1        203
+NEXT      206
+BACK      -1
+BACK      -1
+X         212
+
+LITERAL TABLE:
+Literal   Address
+------------------
+='5'      203
+='2'      204
+='1'      208
+='2'      209
+='4'      213
+
+POOL TABLE:
+#1 -> 0
+#2 -> 2
+#3 -> 4
+#4 -> 5
+
+INTERMEDIATE CODE:
+(AD,01)	(C,200)
+(IS,MOVER)	(L,1)
+(IS,MOVEM)	(S,X)
+(IS,MOVER)	(L,2)
+(AD,03)	(L1+3)
+(DL,02)	(C,='5')
+(DL,02)	(C,='2')
+(IS,ADD)	(L,3)
+(IS,SUB)	(L,4)
+(IS,BC)	(S,BACK)
+(DL,02)	(C,='1')
+(DL,02)	(C,='2')
+(AD,04)	(L1)
+(AD,03)	(NEXT+5)
+(IS,MULT)	(L,5)
+(IS,00)
+(DL,01)	(C,1)
+(DL,02)	(C,='4')
+(AD,02)
+
+=== PASS I Completed Successfully ===
+
+
+=== Code Execution Successful ===

@@ -1,0 +1,53 @@
+# Optimal Page Replacement Algorithm
+
+pages = [2, 3, 2, 1, 5, 2, 4, 5, 3, 2, 5, 2]
+frame_size = 3
+frames = []
+page_faults = 0
+
+print("Page\tFrames\t\tPage Fault")
+
+for i in range(len(pages)):
+    page = pages[i]
+    if page not in frames:
+        # If there is space in frames
+        if len(frames) < frame_size:
+            frames.append(page)
+        else:
+            # Find the page to replace (Optimal)
+            future_index = []
+            for f in frames:
+                if f in pages[i+1:]:
+                    future_index.append(pages[i+1:].index(f))
+                else:
+                    future_index.append(float('inf'))
+            
+            # Replace the page used farthest in the future
+            replace_index = future_index.index(max(future_index))
+            frames[replace_index] = page
+        
+        page_faults += 1
+        print(f"{page}\t{frames}\tYes")
+    else:
+        print(f"{page}\t{frames}\tNo")
+
+print("\nTotal Page Faults:", page_faults)
+
+-------------------------------------------------------------------------------------------------------------------------
+OUTPUT
+-------------------------------------------------------------------------------------------------------------------------
+Page	Frames		Page Fault
+2		[2]			Yes
+3		[2, 3]		Yes
+2		[2, 3]		No
+1		[2, 3, 1]		Yes
+5		[2, 3, 5]		Yes
+2		[2, 3, 5]		No
+4		[4, 3, 5]		Yes
+5		[4, 3, 5]		No
+3		[4, 3, 5]		No
+2		[2, 3, 5]		Yes
+5		[2, 3, 5]		No
+2		[2, 3, 5]		No
+
+Total Page Faults: 6

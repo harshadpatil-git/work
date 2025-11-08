@@ -1,0 +1,51 @@
+import threading
+import time
+import random
+
+# Shared buffer and its capacity
+BUFFER_SIZE = 5
+buffer = []
+
+# Create a mutex lock
+mutex = threading.Lock()
+
+def producer():
+    items = ['A', 'B', 'C', 'D', 'E', 'F']
+    for item in items:
+        time.sleep(random.uniform(0.5, 1.2))  # simulate production time
+        mutex.acquire()  # lock before accessing buffer
+
+        if len(buffer) < BUFFER_SIZE:
+            buffer.append(item)
+            print(f"Producer produced: {item} -> Buffer: {buffer}")
+        else:
+            print("Buffer full, producer waiting...")
+
+        mutex.release()  # unlock after done
+
+def consumer():
+    for _ in range(6):
+        time.sleep(random.uniform(0.8, 1.5))  # simulate consumption time
+        mutex.acquire()  # lock before accessing buffer
+
+        if len(buffer) > 0:
+            item = buffer.pop(0)
+            print(f"Consumer consumed: {item} -> Buffer: {buffer}")
+        else:
+            print("Buffer empty, consumer waiting...")
+
+        mutex.release()  # unlock after done
+
+# Create threads
+t1 = threading.Thread(target=producer)
+t2 = threading.Thread(target=consumer)
+
+# Start and join threads
+t1.start()
+t2.start()
+
+t1.join()
+t2.join()
+
+print("\nSimulation finished — Producer and Consumer synchronized using Mutex.")
+

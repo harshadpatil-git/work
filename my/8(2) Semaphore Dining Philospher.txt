@@ -1,0 +1,37 @@
+import threading
+import time
+from threading import Semaphore
+
+n = 5  # number of philosophers
+chopsticks = [Semaphore(1) for _ in range(n)]
+
+def philosopher(i):
+    for _ in range(3):  # each philosopher eats 3 times
+        print(f"Philosopher {i} is thinking 💭")
+        time.sleep(1)
+        
+        chopsticks[i].acquire()
+        chopsticks[(i + 1) % n].acquire()
+
+        print(f"Philosopher {i} is eating 🍜")
+        time.sleep(1)
+
+        chopsticks[i].release()
+        chopsticks[(i + 1) % n].release()
+
+        print(f"Philosopher {i} finished eating and put down chopsticks 🍴\n")
+        time.sleep(1)
+    
+    print(f"Philosopher {i} is done eating and leaves the table ✅")
+
+threads = []
+for i in range(n):
+    t = threading.Thread(target=philosopher, args=(i,))
+    threads.append(t)
+    t.start()
+
+# Wait for all philosophers to finish
+for t in threads:
+    t.join()
+
+print("\nSimulation finished! All philosophers have eaten and left the table.")

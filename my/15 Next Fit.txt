@@ -1,0 +1,48 @@
+# Next Fit Memory Allocation
+
+# Memory partitions (in KB)
+partitions = [100, 500, 200, 300, 600]
+# Process sizes (in KB)
+processes = [212, 417, 112, 426]
+
+n = len(processes)
+m = len(partitions)
+
+allocation = [-1] * n  # Stores which partition each process gets
+last_alloc = 0         # Keeps track of where the last allocation happened
+
+# Next Fit logic
+for i in range(n):
+    count = 0  # To ensure we don't loop infinitely
+    allocated = False
+
+    while count < m:
+        j = (last_alloc + count) % m  # circular traversal
+        if partitions[j] >= processes[i]:
+            allocation[i] = j
+            partitions[j] -= processes[i]
+            last_alloc = j             # remember where allocation happened
+            allocated = True
+            break
+        count += 1
+
+    # If not allocated, move on to next process
+    if not allocated:
+        continue
+
+# Display Results
+print("Process No.\tProcess Size\tPartition No.")
+for i in range(n):
+    if allocation[i] != -1:
+        print(f"P{i+1}\t\t{processes[i]}K\t\t{allocation[i]+1}")
+    else:
+        print(f"P{i+1}\t\t{processes[i]}K\t\tNot Allocated")
+
+-----------------------------------------------------------------------------------------------------------------
+OUTPUT
+-----------------------------------------------------------------------------------------------------------------
+Process No.	Process Size	Partition No.
+P1		212K		2
+P2		417K		5
+P3		112K		5
+P4		426K		Not Allocated

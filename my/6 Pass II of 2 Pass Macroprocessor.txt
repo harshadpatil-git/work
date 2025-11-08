@@ -1,0 +1,95 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <sstream>
+using namespace std;
+
+// ---------- Macro Definition Table (MDT) ----------
+vector<string> MDT = {
+    "MOVER AREG, &ARG1",
+    "ADD AREG, &ARG2",
+    "MEND",
+    "MOVER AREG, &ARG3",
+    "SUB AREG, &ARG4",
+    "MEND"
+};
+
+// ---------- Macro Name Table (MNT) ----------
+map<string, int> MNT = {
+    {"INCR", 0},
+    {"DECR", 3}
+};
+
+// ---------- Intermediate Code ----------
+vector<string> intermediate_code = {
+    "START",
+    "INCR N1, N2",
+    "DECR N3, N4",
+    "END"
+};
+
+// ---------- Helper function to split strings ----------
+vector<string> split(const string &line, char delimiter = ' ') {
+    vector<string> tokens;
+    string token;
+    stringstream ss(line);
+    while (getline(ss, token, delimiter)) {
+        if (!token.empty())
+            tokens.push_back(token);
+    }
+    return tokens;
+}
+
+// ---------- Main Program (Pass-II Simulation) ----------
+int main() {
+    cout << "Expanded Code (Output):\n\n";
+
+    for (string line : intermediate_code) {
+        vector<string> parts = split(line, ' ');
+
+        // If first token (macro name) exists in MNT → expand
+        if (!parts.empty() && MNT.find(parts[0]) != MNT.end()) {
+            string macro_name = parts[0];
+            int mdt_index = MNT[macro_name];
+            
+            // Get actual arguments
+            vector<string> args;
+            if (parts.size() > 1)
+                args = split(parts[1], ',');
+
+            // Expand macro from MDT
+            while (MDT[mdt_index] != "MEND") {
+                string expanded = MDT[mdt_index];
+
+                // Replace formal arguments with actuals
+                for (int i = 0; i < args.size(); ++i) {
+                    string formal = "&ARG" + to_string(i + 1);
+                    size_t pos = expanded.find(formal);
+                    if (pos != string::npos)
+                        expanded.replace(pos, formal.length(), args[i]);
+                }
+
+                cout << expanded << endl;
+                mdt_index++;
+            }
+        } 
+        else {
+            // Not a macro → copy directly
+            cout << line << endl;
+        }
+    }
+
+    return 0;
+}
+
+-------------------------------------------------------------------------------------------------------------------
+OUTPUT
+-------------------------------------------------------------------------------------------------------------------
+Expanded Code (Output):
+
+START
+MOVER AREG, N1
+ADD AREG, &ARG2
+MOVER AREG, &ARG3
+SUB AREG, &ARG4
+END

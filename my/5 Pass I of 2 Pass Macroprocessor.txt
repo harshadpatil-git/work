@@ -1,0 +1,123 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <sstream>
+using namespace std;
+
+// Helper function to split strings by a delimiter
+vector<string> split(const string &line, char delimiter = ' ') {
+    vector<string> tokens;
+    string token;
+    stringstream ss(line);
+    while (getline(ss, token, delimiter)) {
+        if (!token.empty())
+            tokens.push_back(token);
+    }
+    return tokens;
+}
+
+int main() {
+    vector<string> MDT;             // Macro Definition Table
+    map<string, int> MNT;           // Macro Name Table (macro name -> MDT index)
+    map<string, vector<string>> ALA; // Argument List Array
+
+    vector<string> source = {
+        "START",
+        "MACRO",
+        "INCR &ARG1, &ARG2",
+        "ADD AREG, &ARG2",
+        "MEND",
+        "MACRO",
+        "DECR &ARG3, &ARG4",
+        "SUB AREG, &ARG3",
+        "MOVER CREG, &ARG4",
+        "MEND",
+        "INCR N1, N2",
+        "DECR N3, N4",
+        "END"
+    };
+
+    bool inside_macro = false;
+    string current_macro;
+    int MDT_index = 0;
+
+    for (int i = 0; i < source.size(); i++) {
+        string line = source[i];
+        vector<string> words = split(line, ' ');
+
+        if (words[0] == "MACRO") {
+            inside_macro = true;
+            continue;
+        }
+
+        if (inside_macro) {
+            if (words[0] == "MEND") {
+                MDT.push_back("MEND");
+                inside_macro = false;
+                current_macro = "";
+                continue;
+            }
+
+            // First line inside macro = macro header
+            if (current_macro.empty()) {
+                current_macro = words[0]; // Macro name
+                MNT[current_macro] = MDT_index; // Store MDT index in MNT
+
+                // Extract arguments and store in ALA
+                vector<string> args = split(words[1], ',');
+                for (string &a : args)
+                    ALA[current_macro].push_back(a);
+
+                continue;
+            }
+
+            // For macro body lines → store in MDT
+            MDT.push_back(line);
+            MDT_index++;
+        }
+    }
+
+    // ---------------- Output ----------------
+    cout << "\n--- Macro Name Table (MNT) ---\n";
+    cout << "Macro Name\tMDT Index\n";
+    for (auto &m : MNT)
+        cout << m.first << "\t\t" << m.second << endl;
+
+    cout << "\n--- Macro Definition Table (MDT) ---\n";
+    for (int i = 0; i < MDT.size(); i++)
+        cout << i << "\t" << MDT[i] << endl;
+
+    cout << "\n--- Argument List Array (ALA) ---\n";
+    for (auto &a : ALA) {
+        cout << "Macro Name: " << a.first << endl;
+        for (auto &arg : a.second)
+            cout << "   " << arg << endl;
+    }
+
+    return 0;
+}
+
+--------------------------------------------------------------------------------------------------------------------------
+OUTPUT
+--------------------------------------------------------------------------------------------------------------------------
+
+--- Macro Name Table (MNT) ---
+Macro Name	MDT Index
+DECR		1
+INCR		0
+
+--- Macro Definition Table (MDT) ---
+0	ADD AREG, &ARG2
+1	MEND
+2	SUB AREG, &ARG3
+3	MOVER CREG, &ARG4
+4	MEND
+
+--- Argument List Array (ALA) ---
+Macro Name: DECR
+   &ARG3
+Macro Name: INCR
+   &ARG1
+
+
+=== Code Execution Successful ===

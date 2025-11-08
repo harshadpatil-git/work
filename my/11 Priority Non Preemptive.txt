@@ -1,0 +1,57 @@
+# Priority Scheduling (Non-Preemptive)
+# Lower priority number means higher priority
+
+process = ['P1', 'P2', 'P3', 'P4']
+arrival = [0, 0, 2, 3]
+burst = [8, 6, 1, 2]
+priority = [1, 2, 3, 0]
+
+n = len(process)
+completed = [False] * n
+completion = [0] * n
+turnaround = [0] * n
+waiting = [0] * n
+
+time = 0
+completed_count = 0
+
+while completed_count < n:
+    # Find process with highest priority (lowest priority number)
+    idx = -1
+    min_prio = 999
+    for i in range(n):
+        if arrival[i] <= time and not completed[i]:
+            if priority[i] < min_prio:
+                min_prio = priority[i]
+                idx = i
+    
+    if idx == -1:  # no process has arrived yet
+        time += 1
+        continue
+
+    time += burst[idx]
+    completion[idx] = time
+    turnaround[idx] = completion[idx] - arrival[idx]
+    waiting[idx] = turnaround[idx] - burst[idx]
+    completed[idx] = True
+    completed_count += 1
+
+# Display Results
+print("Process\tAT\tBT\tPR\tCT\tTAT\tWT")
+for i in range(n):
+    print(f"{process[i]}\t{arrival[i]}\t{burst[i]}\t{priority[i]}\t{completion[i]}\t{turnaround[i]}\t{waiting[i]}")
+
+print("\nAverage Waiting Time =", round(sum(waiting)/n, 2))
+print("Average Turnaround Time =", round(sum(turnaround)/n, 2))
+
+---------------------------------------------------------------------------------------------------------------------------------
+OUTPUT
+---------------------------------------------------------------------------------------------------------------------------------
+Process	AT	BT	PR	CT	TAT	WT
+P1		0	8	1	8	8	0
+P4		3	2	0	10	7	5
+P2		0	6	2	16	16	10
+P3		2	1	3	17	15	14
+
+Average Waiting Time = 7.25
+Average Turnaround Time = 11.5

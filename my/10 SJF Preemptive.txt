@@ -1,0 +1,62 @@
+# SJF (Preemptive) or SRTF CPU Scheduling
+
+process = ['P1', 'P2', 'P3', 'P4']
+arrival = [0, 1, 4, 3]
+burst = [6, 4, 8, 3]
+
+n = len(process)
+remaining = burst[:]  # copy of burst times
+complete = 0
+time = 0
+shortest = 0
+check = False
+
+waiting = [0] * n
+turnaround = [0] * n
+completion = [0] * n
+
+while complete != n:
+    # Find process with minimum remaining time at current time
+    min_time = 9999
+    shortest = -1
+    for i in range(n):
+        if arrival[i] <= time and remaining[i] > 0 and remaining[i] < min_time:
+            min_time = remaining[i]
+            shortest = i
+            check = True
+
+    if not check:   # no process has arrived yet
+        time += 1
+        continue
+
+    # Process one unit of time
+    remaining[shortest] -= 1
+    time += 1
+
+    # If process is finished
+    if remaining[shortest] == 0:
+        complete += 1
+        check = False
+        completion[shortest] = time
+        turnaround[shortest] = completion[shortest] - arrival[shortest]
+        waiting[shortest] = turnaround[shortest] - burst[shortest]
+
+# Display output
+print("Process\tAT\tBT\tCT\tTAT\tWT")
+for i in range(n):
+    print(f"{process[i]}\t{arrival[i]}\t{burst[i]}\t{completion[i]}\t{turnaround[i]}\t{waiting[i]}")
+
+print("\nAverage Waiting Time =", round(sum(waiting)/n, 2))
+print("Average Turnaround Time =", round(sum(turnaround)/n, 2))
+
+--------------------------------------------------------------------------------------------------------------------
+OUTPUT
+--------------------------------------------------------------------------------------------------------------------
+Process	AT	BT	CT	TAT	WT
+P1		0	6	17	17	11
+P2		1	4	5	4	0
+P3		4	8	25	21	13
+P4		3	3	8	5	2
+
+Average Waiting Time = 6.5
+Average Turnaround Time = 11.75
